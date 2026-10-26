@@ -1,6 +1,9 @@
 import os
 import requests
 from math import radians, sin, cos, sqrt, atan2
+from datetime import timedelta,timezone
+from timezonefinder import TimezoneFinder
+from zoneinfo import ZoneInfo
 
 def geocode_location(location):    
     token=os.getenv("MAPBOX_ACCESS_TOKEN")
@@ -22,9 +25,6 @@ def geocode_location(location):
          
 
 
-
-    
-
 def get_routes(origin, destination):
     """Fetch driving routes between two coordinates from Mapbox."""
 
@@ -42,6 +42,7 @@ def get_routes(origin, destination):
         "alternatives": "true",
         "overview": "full",
         "geometries": "geojson",
+        "steps": "true",
     }
 
     response = requests.get(url, params=params, timeout=20)
@@ -60,9 +61,9 @@ def get_weather(latitude, longitude):
     "wind_speed_unit": "mph",
     "precipitation_unit": "inch",
     "forecast_days": 2,
+    "timezone": "GMT"
 }
-     
-    response = requests.get(url, params=params, timeout=20)
+    response = requests.get(url, params=params, timeout=(5, 30))
     response.raise_for_status()
     data = response.json()
     return data
@@ -92,7 +93,60 @@ def calculate_cumulative_distances(coordinates):
         total_distance+=segment_distance
         cumulative_distances.append(total_distance)
     return cumulative_distances
+def calculate_cumulative_step_distances(steps):
+    total_distance = 0
+    cumulative_distances = [0]
+
+    for step in steps:
+        distance = step["distance"] / 1609.344
+        total_distance += distance
+        cumulative_distances.append(total_distance)
+        
+
+    return cumulative_distances
 
 
-def generate_checkpoints(route, interval_miles):
-     pass
+def generate_route_checkpoints(steps, interval):
+    total_distance=0
+    checkpoints=[]
+    target_mile=interval
+    for step in steps:
+        coordinates = step["geometry"]["coordinates"]
+        road_distance = step["distance"] / 1609.344
+        cumulative_geometry_distances=calculate_cumulative_distances(coordinates)
+        geometry_distance = cumulative_geometry_distances[-1]
+        if geometry_distance == 0 or road_distance == 0:
+            continue
+        scale_factor = road_distance / geometry_distance
+        for i in range(1, len(coordinates)):
+            segment_distance = calculate_distance(coordinates[i - 1],coordinates[i])
+            adjusted_distance = segment_distance * scale_factor
+            total_distance+=adjusted_distance
+            if total_distance >= target_mile:
+                previous_distance = total_distance - adjusted_distance
+                fraction = (target_mile - previous_distance) / adjusted_distance
+                longitude = coordinates[i - 1][0] + fraction * (coordinates[i][0] - coordinates[i - 1][0])
+                latitude= coordinates[i - 1][1] + fraction * (coordinates[i][1] - coordinates[i - 1][1])
+                checkpoints.append({"distance": target_mile,"coordinates": [longitude, latitude]})
+                target_mile += interval
+                
+
+
+
+    return checkpoints
+
+
+
+def add_arrival_times(checkpoints, departure_time, average_speed):
+    for checkpoint in checkpoints:
+        travel_time = checkpoint["distance"] / average_speed
+        travel_duration = timedelta(hours=travel_time)
+        arrival = departure_time + travel_duration
+        checkpoint["arrival_time"] = arrival
+    return checkpoints
+
+def get_timezone(longitude,latitude):
+    tf = TimezoneFinder()
+    return tf.timezone_at(lng=longitude, lat=latitude)
+
+    
