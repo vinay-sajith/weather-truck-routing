@@ -1,7 +1,7 @@
 import os
 import requests
 from math import radians, sin, cos, sqrt, atan2
-from datetime import timedelta,timezone
+from datetime import timedelta,timezone ,datetime
 from timezonefinder import TimezoneFinder
 from zoneinfo import ZoneInfo
 import time
@@ -56,33 +56,71 @@ def get_routes(origin, destination):
 
 
 def get_weather_batch(coordinates):
-    url = "https://api.open-meteo.com/v1/forecast"
+    api_key = os.getenv("OPENWEATHER_API_KEY")
 
-    latitudes = ",".join(str(lat) for lat, lon in coordinates)
-    longitudes = ",".join(str(lon) for lat, lon in coordinates)
+    if not api_key:
+        raise Exception("OpenWeather API key is not configured.")
 
-    params = {
-        "latitude": latitudes,
-        "longitude": longitudes,
-        "hourly": "wind_speed_10m,precipitation,rain,snowfall",
-        "wind_speed_unit": "mph",
-        "precipitation_unit": "inch",
-        "forecast_days": 2,
-        "timezone": "GMT",
-    }
-    print("Weather API URL length:", len(requests.Request("GET", url, params=params).prepare().url))
-    print("Weather API locations:", len(coordinates))
-    for attempt in range(3):
-        response = requests.get(url, params=params, timeout=(30, 60))
-        if response.status_code == 429:
-            print("Open-Meteo status:", response.status_code)
-            print("Open-Meteo response:", response.text[:1000])
-            time.sleep(2 ** attempt)
-            continue
+    url = "https://api.openweathermap.org/data/2.5/forecast"
+
+    results = []
+
+    for lat, lon in coordinates:
+        params = {
+            "lat": lat,
+            "lon": lon,
+            "appid": api_key,
+            "units": "imperial",
+        }
+
+        response = requests.get(
+            url,
+            params=params,
+            timeout=(10, 30),
+        )
         response.raise_for_status()
-        return response.json()
-    raise Exception("Open-Meteo rate limit exceeded after 3 attempts.")
 
+        data = response.json()
+        forecast_entries = data.get("list", [])
+
+        if not forecast_entries:
+            raise Exception("OpenWeather returned no forecast data.")
+
+        hourly = {
+            "time": [],
+            "wind_speed_10m": [],
+            "precipitation": [],
+            "rain": [],
+            "snowfall": [],
+        }
+
+        for entry in forecast_entries:
+            hourly["time"].append(
+                datetime.fromtimestamp(
+                    entry["dt"], tz=timezone.utc
+                ).strftime("%Y-%m-%dT%H:%M")
+            )
+
+            wind_speed = entry.get("wind", {}).get("speed", 0)
+
+            # OpenWeather reports rain and snow volume in mm
+            # over the preceding 3-hour period.
+            rain_mm = entry.get("rain", {}).get("3h", 0)
+            snow_mm = entry.get("snow", {}).get("3h", 0)
+
+            rain_inches = rain_mm / 25.4
+            snow_inches = snow_mm / 25.4
+
+            hourly["wind_speed_10m"].append(wind_speed)
+            hourly["rain"].append(rain_inches)
+            hourly["snowfall"].append(snow_inches)
+            hourly["precipitation"].append(
+                rain_inches + snow_inches
+            )
+
+        results.append({"hourly": hourly})
+
+    return results
 
 def calculate_distance(point_a, point_b):
     # Calculate and return the distance between two coordinates in miles
