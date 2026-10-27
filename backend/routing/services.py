@@ -4,6 +4,7 @@ from math import radians, sin, cos, sqrt, atan2
 from datetime import timedelta,timezone
 from timezonefinder import TimezoneFinder
 from zoneinfo import ZoneInfo
+import time
 
 def geocode_location(location):    
     token=os.getenv("MAPBOX_ACCESS_TOKEN")
@@ -71,11 +72,14 @@ def get_weather_batch(coordinates):
     }
     print("Weather API URL length:", len(requests.Request("GET", url, params=params).prepare().url))
     print("Weather API locations:", len(coordinates))
-
-    response = requests.get(url, params=params, timeout=(30, 60))
-    response.raise_for_status()
-
-    return response.json()
+    for attempt in range(3):
+        response = requests.get(url, params=params, timeout=(30, 60))
+        if response.status_code == 429:
+            time.sleep(2 ** attempt)
+            continue
+        response.raise_for_status()
+        return response.json()
+    raise Exception("Open-Meteo rate limit exceeded after 3 attempts.")
 
 
 def calculate_distance(point_a, point_b):
