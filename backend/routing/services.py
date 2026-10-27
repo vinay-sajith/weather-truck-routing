@@ -100,9 +100,13 @@ def get_weather_batch(coordinates):
                     entry["dt"], tz=timezone.utc
                 ).strftime("%Y-%m-%dT%H:%M")
             )
-            wind_speed = entry["wind"]["speed"]
-            rain_mm = entry.get("rain", {}).get("3h")
-            snow_mm = entry.get("snow", {}).get("3h")
+
+            wind_speed = entry.get("wind", {}).get("speed", 0)
+
+            # OpenWeather reports rain and snow volume in mm
+            # over the preceding 3-hour period.
+            rain_mm = entry.get("rain", {}).get("3h", 0)
+            snow_mm = entry.get("snow", {}).get("3h", 0)
 
             rain_inches = rain_mm / 25.4
             snow_inches = snow_mm / 25.4
