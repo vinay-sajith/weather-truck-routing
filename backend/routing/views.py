@@ -6,6 +6,9 @@ from .services import *
 from zoneinfo import ZoneInfo
 from datetime import datetime, timezone
 import requests
+from .risk import calculate_checkpoint_risk
+from .ranking import rank_routes
+from datetime import timedelta
 class RouteAPIView(APIView):
 
     def post(self, request):
@@ -29,44 +32,59 @@ class RouteAPIView(APIView):
                     departure_time = departure_time.astimezone(origin_timezone)
                 destination_coordinates = geocode_location(destination)
                 routes = get_routes(origin_coordinates, destination_coordinates)
+                all_checkpoints = []
                 for route in routes:
-                    legs = route["legs"]
-                    for leg in legs:
-                        steps = leg["steps"]
-                        checkpoints = generate_route_checkpoints(steps, interval_miles)
-                        meters=route["distance"]
-                        seconds=route["duration"]
-                        distance_miles=meters/1609.344
-                        duration_hours=seconds/3600
-                        avg_speed=distance_miles/duration_hours
-                        checkpoints = add_arrival_times(checkpoints, departure_time, avg_speed)
-                        for checkpoint in checkpoints:
-                            coordinates = checkpoint["coordinates"]
-                            latitude=coordinates[1]
-                            longitude=coordinates[0]
-                            weather=get_weather(latitude, longitude)
-                            checkpoint["weather"] = weather
-                            arrival_utc = checkpoint["arrival_time"].astimezone(timezone.utc)
-                            hourly = weather["hourly"]
-                            forecast_times = hourly["time"]
-                            forecast_datetimes = [datetime.strptime(t, "%Y-%m-%dT%H:%M").replace(tzinfo=timezone.utc)for t in forecast_times]
-                            closest_index = min(range(len(forecast_datetimes)),key=lambda i: abs(forecast_datetimes[i] - arrival_utc))
-                            wind_speed = hourly["wind_speed_10m"][closest_index]
-                            precipitation = hourly["precipitation"][closest_index]
-                            rain = hourly["rain"][closest_index]
-                            snowfall = hourly["snowfall"][closest_index]
-                            checkpoint_weather = {
-    "wind_speed": wind_speed,
-    "precipitation": precipitation,
-    "rain": rain,
-    "snowfall": snowfall
-}
-                            checkpoint["weather"] = checkpoint_weather
-                        route["checkpoints"] = checkpoints
+                     route["checkpoints"] = []
+                     legs = route["legs"]
+                     for leg in legs:
+                          steps = leg["steps"]
+                          checkpoints = generate_route_checkpoints(steps, interval_miles)
+                          meters = route["distance"]
+                          seconds = route["duration"]
+                          distance_miles = meters / 1609.344
+                          duration_hours = seconds / 3600
+                          avg_speed = distance_miles / duration_hours
+
+                          checkpoints = add_arrival_times(checkpoints, departure_time, avg_speed)
+
+                          route["checkpoints"].extend(checkpoints)
+                          all_checkpoints.extend(checkpoints)
+                coordinates = [
+    (checkpoint["coordinates"][1], checkpoint["coordinates"][0])
+    for checkpoint in all_checkpoints]
+                weather_data = get_weather_batch(coordinates)
+                for checkpoint, weather in zip(all_checkpoints, weather_data):
+                    arrival_utc = checkpoint["arrival_time"].astimezone(timezone.utc)
+                    hourly = weather["hourly"]
+                    forecast_times = hourly["time"]
+                    forecast_datetimes = [datetime.strptime(t, "%Y-%m-%dT%H:%M").replace(tzinfo=timezone.utc)for t in forecast_times]
+                    closest_index = min(range(len(forecast_datetimes)),key=lambda i: abs(forecast_datetimes[i] - arrival_utc))
+                    wind_speed = hourly["wind_speed_10m"][closest_index]
+                    precipitation = hourly["precipitation"][closest_index]
+                    rain = hourly["rain"][closest_index]
+                    snowfall = hourly["snowfall"][closest_index]
+                    checkpoint_weather = {
+                        "wind_speed": wind_speed,
+                        "precipitation": precipitation,
+                        "rain": rain,
+                        "snowfall": snowfall
+                    }
+
+                    checkpoint["weather"] = checkpoint_weather
+                    checkpoint["risk"]=calculate_checkpoint_risk(wind_speed,rain,snowfall,load_weight)
+                ranked_routes = rank_routes(routes)
+                for item in ranked_routes:
+                     route = item["route"]
+                     item["destination_eta"] = departure_time + timedelta(
+        seconds=route["duration"]
+    )
 
                 print(routes[0]["checkpoints"][:2])
                 return Response(
-    {"routes": routes},
+    {
+        "routes": ranked_routes,
+        "recommended_route": ranked_routes[0]
+    },
     status=status.HTTP_200_OK
 )
 
@@ -78,11 +96,5 @@ class RouteAPIView(APIView):
             return Response(serializerRoute.errors,status=status.HTTP_400_BAD_REQUEST)
 
 
-class WeatherAPIView(APIView):
-    def get(self, request):
-        latitude = float(request.query_params.get("latitude"))
-        longitude = float(request.query_params.get("longitude"))
-        weather=get_weather(latitude, longitude)
-        return Response({"weather":weather},status=status.HTTP_200_OK)
-    
+
 

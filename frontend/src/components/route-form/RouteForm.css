@@ -1,0 +1,130 @@
+.route-form-panel {
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 14px;
+}
+
+.route-form-heading .eyebrow {
+  margin: 0 0 10px;
+  color: #737373;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.route-form-heading h2 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: -0.8px;
+}
+
+.route-form-heading > p:last-child {
+  margin: 10px 0 24px;
+  color: #737373;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.route-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.route-form label {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.route-form input,
+.route-form select {
+  width: 100%;
+  min-height: 46px;
+  margin-bottom: 20px;
+  padding: 0 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  background: #fff;
+  color: #171717;
+  font-size: 13px;
+}
+
+.route-form input:focus,
+.route-form select:focus {
+  outline: 2px solid #a3a3a3;
+  outline-offset: 1px;
+}
+
+.analyze-button {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border: none;
+  border-radius: 8px;
+  background: #171717;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.analyze-button:hover {
+  background: #404040;
+}
+
+.analyze-button span {
+  font-size: 20px;
+}
+.location-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.location-input-wrapper input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.location-suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.location-suggestions li {
+  margin: 0;
+  padding: 0;
+}
+
+.location-suggestions li button {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 0;
+  background: #fff;
+  color: #111;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.4;
+  cursor: pointer;
+  white-space: normal;
+}
+
+.location-suggestions li button:hover {
+  background: #f2f4f7;
+}

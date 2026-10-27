@@ -1,0 +1,27 @@
+.route-map {
+  width: 100%;
+  min-width: 0;
+  height: 600px;
+  overflow: hidden;
+  border: 1px solid #e5e5e5;
+  border-radius: 14px;
+  background: #e8edf0;
+}
+
+.mapbox-container {
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 850px) {
+  .route-map {
+    height: 400px;
+  }
+}
+
+@media (max-width: 480px) {
+  .route-map {
+    height: 300px;
+    border-radius: 10px;
+  }
+}

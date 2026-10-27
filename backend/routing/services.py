@@ -52,21 +52,30 @@ def get_routes(origin, destination):
 
     return data["routes"]
 
-def get_weather(latitude, longitude):
+
+
+def get_weather_batch(coordinates):
     url = "https://api.open-meteo.com/v1/forecast"
+
+    latitudes = ",".join(str(lat) for lat, lon in coordinates)
+    longitudes = ",".join(str(lon) for lat, lon in coordinates)
+
     params = {
-    "latitude": latitude,
-    "longitude": longitude,
-    "hourly": "wind_speed_10m,precipitation,rain,snowfall",
-    "wind_speed_unit": "mph",
-    "precipitation_unit": "inch",
-    "forecast_days": 2,
-    "timezone": "GMT"
-}
-    response = requests.get(url, params=params, timeout=(5, 30))
+        "latitude": latitudes,
+        "longitude": longitudes,
+        "hourly": "wind_speed_10m,precipitation,rain,snowfall",
+        "wind_speed_unit": "mph",
+        "precipitation_unit": "inch",
+        "forecast_days": 2,
+        "timezone": "GMT",
+    }
+    print("Weather API URL length:", len(requests.Request("GET", url, params=params).prepare().url))
+    print("Weather API locations:", len(coordinates))
+
+    response = requests.get(url, params=params, timeout=(30, 60))
     response.raise_for_status()
-    data = response.json()
-    return data
+
+    return response.json()
 
 
 def calculate_distance(point_a, point_b):
