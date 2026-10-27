@@ -75,6 +75,8 @@ def get_weather_batch(coordinates):
     for attempt in range(3):
         response = requests.get(url, params=params, timeout=(30, 60))
         if response.status_code == 429:
+            print("Open-Meteo status:", response.status_code)
+            print("Open-Meteo response:", response.text[:1000])
             time.sleep(2 ** attempt)
             continue
         response.raise_for_status()
