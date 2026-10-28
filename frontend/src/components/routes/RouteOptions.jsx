@@ -147,14 +147,12 @@ function RouteOptions({
               <div className="route-card-risk-details">
                 <div>
                   <span className="stat-label">Severe miles</span>
-                  <strong>{metrics.severe_miles ?? 0} mi</strong>
-                </div>
-
-                <div>
-                  <span className="stat-label">High-risk miles</span>
-                  <strong>{metrics.high_miles ?? 0} mi</strong>
-                </div>
-
+                  <strong>{Number(metrics.severe_miles ?? 0).toFixed(2)} mi</strong>
+                  </div>
+              <div>
+                <span className="stat-label">High-risk miles</span>
+                <strong>{Number(metrics.high_miles ?? 0).toFixed(2)} mi</strong>
+              </div>
                 <div>
                   <span className="stat-label">Average risk</span>
                   <strong>
