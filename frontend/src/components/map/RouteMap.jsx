@@ -57,32 +57,37 @@ markersRef.current = [];
 checkpoints.forEach((checkpoint, index) => {
   const [longitude, latitude] = checkpoint.coordinates;
 
-const marker = new mapboxgl.Marker({    color:
-      checkpoint.risk === "Severe"
+const marker = new mapboxgl.Marker({
+  color:
+    checkpoint.risk === "No Travel"
+      ? "#7f1d1d"
+      : checkpoint.risk === "Severe"
         ? "#dc2626"
         : checkpoint.risk === "High"
           ? "#ea580c"
           : checkpoint.risk === "Moderate"
             ? "#eab308"
             : "#16a34a",
-  })
-    .setLngLat([longitude, latitude])
-    .setPopup(
-      new mapboxgl.Popup({ offset: 25 }).setHTML(`
-        <div>
-          <strong>Checkpoint ${index + 1}</strong>
-          <p>Distance: ${checkpoint.distance} miles</p>
-          <p>Risk: ${checkpoint.risk}</p>
-          <p>Wind: ${checkpoint.weather.wind_speed} mph</p>
-          <p>Precipitation: ${checkpoint.weather.precipitation} in</p>
-          <p>Rain: ${checkpoint.weather.rain} in</p>
-          <p>Snowfall: ${checkpoint.weather.snowfall} cm</p>
-          <p>Arrival: ${new Date(checkpoint.arrival_time).toLocaleString()}</p>
-        </div>
-      `),
-    )
-    .addTo(map);
-    markersRef.current.push(marker);
+})
+  .setLngLat([longitude, latitude])
+  .setPopup(
+    new mapboxgl.Popup({ offset: 25 }).setHTML(`
+      <div>
+        <strong>Checkpoint ${index + 1}</strong>
+        <p>Distance: ${Number(checkpoint.distance).toFixed(2)} miles</p>
+        <p>Risk: ${checkpoint.risk}</p>
+        <p>Wind: ${Number(checkpoint.weather.wind_speed).toFixed(2)} mph</p>
+        <p>Precipitation: ${Number(checkpoint.weather.precipitation).toFixed(2)} in</p>
+        <p>Rain: ${Number(checkpoint.weather.rain).toFixed(2)} in</p>
+        <p>Snowfall: ${Number(checkpoint.weather.snowfall).toFixed(2)} cm</p>
+        <p>Arrival: ${new Date(checkpoint.arrival_time).toLocaleString()}</p>
+      </div>
+    `),
+  )
+  .addTo(map);
+
+markersRef.current.push(marker);
+
 });
 
   const drawRoutes = () => {
