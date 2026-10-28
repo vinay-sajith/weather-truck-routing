@@ -61,10 +61,12 @@ def calculate_checkpoint_risk(wind_speed, rain, snow, load_weight):
     print("Wind risk:", wind_risk)
     print("Rain risk:", rain_risk)
     print("Snow risk:", snow_risk)
-    print("Final risk:", highest_risk)
     for risk in risks:
         if risk_order[risk] > risk_order[highest_risk]:
             highest_risk = risk
+    print("Final risk:", highest_risk)
     return highest_risk
+    
+
 
     
