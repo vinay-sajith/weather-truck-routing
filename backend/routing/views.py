@@ -72,7 +72,6 @@ class RouteAPIView(APIView):
 
                     checkpoint["weather"] = checkpoint_weather
                     checkpoint["risk"]=calculate_checkpoint_risk(wind_speed,rain,snowfall,load_weight)
-                    print("Risk function returned:", checkpoint["risk"])
                 ranked_routes = rank_routes(routes)
                 for item in ranked_routes:
                      route = item["route"]
@@ -80,7 +79,6 @@ class RouteAPIView(APIView):
         seconds=route["duration"]
     )
 
-                print(routes[0]["checkpoints"][:2])
                 return Response(
     {
         "routes": ranked_routes,
