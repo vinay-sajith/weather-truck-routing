@@ -135,11 +135,10 @@ Before running GoRoute locally, install:
 ### 1. Clone the Repository
 
 ```bash
-git clone YOUR_GITHUB_REPOSITORY_URL
+git clone https://github.com/vinay-sajith/weather-truck-routing
 cd GoRoute
 ```
 
-Replace `YOUR_GITHUB_REPOSITORY_URL` with your actual GitHub repository URL.
 
 ### 2. Set Up the Backend
 

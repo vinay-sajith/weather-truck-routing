@@ -3,8 +3,7 @@ import requests
 from math import radians, sin, cos, sqrt, atan2
 from datetime import timedelta,timezone ,datetime
 from timezonefinder import TimezoneFinder
-from zoneinfo import ZoneInfo
-import time
+
 
 def geocode_location(location):    
     token=os.getenv("MAPBOX_ACCESS_TOKEN")
